@@ -231,7 +231,7 @@ async def query_stream(
             yield _sse("status", {"stage": "retrieval", "message": "Retrieving documents…"})
 
             # Run the graph in a thread so we don't block the event loop
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
             result = await loop.run_in_executor(
                 None,
                 lambda: graph.invoke(

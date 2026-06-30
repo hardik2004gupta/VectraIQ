@@ -1,0 +1,52 @@
+# Version control
+.git
+.gitignore
+
+# Frontend (not needed in backend image)
+frontend/
+frontend/node_modules/
+frontend/.next/
+
+# Archive / dev artifacts
+archive/
+notebooks/
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Test artifacts
+tests/
+test-results/
+coverage.xml
+.coverage
+
+# Evaluation harness (not needed at runtime)
+eval/
+
+# Docs
+docs/
+*.md
+LICENSE
+
+# Local env
+.env
+.env.*
+!.env.example
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store

@@ -21,6 +21,18 @@ export const metadata: Metadata = {
     "Production-grade AI Knowledge Platform — Kubernetes IT-Operations Copilot with Hybrid RAG, Text2SQL, and Enterprise Security.",
   keywords: ["RAG", "Kubernetes", "AI", "Knowledge Base", "SRE", "Platform Engineering"],
   authors: [{ name: "VectraIQ" }],
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true },
+  },
   openGraph: {
     title: "VectraIQ",
     description: "AI-powered Kubernetes IT-Operations Copilot",

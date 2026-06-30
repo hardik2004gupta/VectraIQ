@@ -1,6 +1,6 @@
 [project]
 name = "vectraiq"
-version = "2.0.0"
+version = "1.0.0"
 description = "VectraIQ — Production-grade AI Knowledge Platform with Hybrid RAG, Text2SQL, Intelligent Routing, and Enterprise Security"
 requires-python = ">=3.12"
 dependencies = [
@@ -23,40 +23,42 @@ dependencies = [
     # Doc parsing
     "docling>=2.9.0",
 
-    # Postgres — psycopg2 for app code; psycopg v3 required by LangGraph PostgresSaver
+    # Postgres — psycopg2 for application code; psycopg v3 required by LangGraph PostgresSaver
     "psycopg2-binary>=2.9.10",
     "psycopg[binary]>=3.1",
 
-    # Sparse search (TF-IDF) — used in sparse_vector_service.py
+    # Sparse search (TF-IDF + RRF fusion)
     "scikit-learn>=1.4",
 
-    # Cache
+    # Cache (Upstash Redis HTTP API)
     "upstash-redis>=1.2.0",
 
-    # Auth
+    # Authentication
     "pyjwt>=2.10.0",
     "passlib[bcrypt]>=1.7.4",
 
     # Logging
     "loguru>=0.7.2",
 
-    # Agent orchestration
+    # LangGraph orchestration
     "langgraph>=0.2.50",
     "langgraph-checkpoint-postgres>=2.0",
 
-    # === Phase 2+ deps pinned now to avoid churn ===
+    # Retrieval improvements
     "sentence-transformers>=3.3.0",
     "voyageai>=0.3.0",
     "tavily-python>=0.5.0",
 
-    # === Phase 4 deps ===
+    # Security scanning
     "llm-guard>=0.3.15",
+
+    # Storage
     "boto3>=1.35.0",
     "pypdf>=5.1.0",
 
-    # === Data pipeline deps ===
-    "pyyaml>=6.0",   # config.yaml parsing in scripts/data_pipeline/
-    "faker>=33.0.0", # synthetic K8s ops SQL generation
+    # Utilities
+    "pyyaml>=6.0",
+    "faker>=33.0.0",
 ]
 
 [project.optional-dependencies]

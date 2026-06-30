@@ -156,7 +156,7 @@ async def _generic_error_handler(request: Request, exc: Exception) -> JSONRespon
 def create_app() -> FastAPI:
     app = FastAPI(
         title="VectraIQ",
-        version="2.0.0",
+        version="1.0.0",
         description=(
             "Production-grade AI Knowledge Platform — "
             "Kubernetes IT-Operations Copilot with Hybrid RAG, "

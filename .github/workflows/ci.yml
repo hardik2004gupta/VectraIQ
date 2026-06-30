@@ -57,7 +57,7 @@ jobs:
 
       - name: Run mypy
         run: uv run mypy vectraiq/ --ignore-missing-imports --no-strict-optional
-        continue-on-error: true  # mypy is advisory until full coverage added
+        continue-on-error: true  # advisory until full type coverage is complete
 
   backend-tests:
     name: Backend — Tests
@@ -140,10 +140,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: frontend/package.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Type check
         run: npm run type-check
@@ -168,10 +168,10 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: frontend/package.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
 
       - name: Build Next.js app
         run: npm run build
@@ -220,7 +220,7 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Run pip-audit on locked requirements
+      - name: Run pip-audit
         run: |
           uv run pip-audit --requirement <(uv export --no-hashes) --format json \
             --output pip-audit-results.json || true
@@ -234,7 +234,7 @@ jobs:
 
       - name: Frontend npm audit
         working-directory: frontend
-        run: npm audit --audit-level=high || true
+        run: npm install && npm audit --audit-level=high || true
 
   # ── Summary gate ─────────────────────────────────────────────────────────────
 

@@ -15,15 +15,15 @@ const COLORS = ["#6366f1", "#8b5cf6", "#a78bfa", "#c4b5fd", "#818cf8"];
 
 const CHART_STYLE = {
   fontSize: 11,
-  fill: "#6a6a6a",
+  fill: "var(--color-text-tertiary)",
 };
 
 const TOOLTIP_STYLE = {
   contentStyle: {
-    background: "#1a1a1a",
-    border: "1px solid #2a2a2a",
+    background: "var(--color-bg-elevated)",
+    border: "1px solid var(--color-border-subtle)",
     borderRadius: 10,
-    color: "#f2f2f2",
+    color: "var(--color-text-primary)",
     fontSize: 12,
   },
 };
@@ -159,7 +159,7 @@ export default function AnalyticsPage() {
                 <YAxis tick={CHART_STYLE} axisLine={false} tickLine={false} />
                 <Tooltip {...TOOLTIP_STYLE} />
                 <Bar dataKey="hits" fill="#6366f1" radius={[4, 4, 0, 0]} name="Hits" />
-                <Bar dataKey="misses" fill="#2a2a2a" radius={[4, 4, 0, 0]} name="Misses" />
+                <Bar dataKey="misses" fill="var(--color-bg-elevated)" radius={[4, 4, 0, 0]} name="Misses" />
               </BarChart>
             </ResponsiveContainer>
           )}
@@ -194,7 +194,7 @@ export default function AnalyticsPage() {
                   ))}
                 </Pie>
                 <Tooltip {...TOOLTIP_STYLE} />
-                <Legend wrapperStyle={{ fontSize: 11, color: "#6a6a6a" }} />
+                <Legend wrapperStyle={{ fontSize: 11, color: "var(--color-text-tertiary)" }} />
               </PieChart>
             </ResponsiveContainer>
           )}
