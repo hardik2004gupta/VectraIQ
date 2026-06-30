@@ -1,0 +1,251 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+  # ── Backend ─────────────────────────────────────────────────────────────────
+
+  backend-lint:
+    name: Backend — Lint & Format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          version: "latest"
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Run ruff lint
+        run: uv run ruff check vectraiq/ tests/
+
+      - name: Run ruff format check
+        run: uv run ruff format --check vectraiq/ tests/
+
+  backend-typecheck:
+    name: Backend — Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Run mypy
+        run: uv run mypy vectraiq/ --ignore-missing-imports --no-strict-optional
+        continue-on-error: true  # mypy is advisory until full coverage added
+
+  backend-tests:
+    name: Backend — Tests
+    runs-on: ubuntu-latest
+    env:
+      JWT_SECRET: ci-test-secret-do-not-use-in-prod
+      OPENAI_API_KEY: sk-test-placeholder
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/vectraiq_test
+      QDRANT_URL: http://localhost:6333
+      LOG_LEVEL: WARNING
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: vectraiq_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync --extra dev
+
+      - name: Run tests
+        run: |
+          uv run pytest tests/ \
+            --tb=short \
+            -v \
+            --junitxml=test-results/junit.xml \
+            --cov=vectraiq \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing \
+            -m "not integration"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-test-results
+          path: |
+            test-results/
+            coverage.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: always()
+        with:
+          files: coverage.xml
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  # ── Frontend ─────────────────────────────────────────────────────────────────
+
+  frontend-lint:
+    name: Frontend — Lint & Type Check
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true
+
+  frontend-build:
+    name: Frontend — Build Verification
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Next.js app
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: frontend/.next/
+          retention-days: 1
+
+  # ── Docker ────────────────────────────────────────────────────────────────────
+
+  docker-build:
+    name: Docker — Build Verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: vectraiq:ci-${{ github.sha }}
+
+  # ── Security ──────────────────────────────────────────────────────────────────
+
+  security-scan:
+    name: Security — Dependency Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Set up Python
+        run: uv python install ${{ env.PYTHON_VERSION }}
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run pip-audit on locked requirements
+        run: |
+          uv run pip-audit --requirement <(uv export --no-hashes) --format json \
+            --output pip-audit-results.json || true
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit
+          path: pip-audit-results.json
+
+      - name: Frontend npm audit
+        working-directory: frontend
+        run: npm audit --audit-level=high || true
+
+  # ── Summary gate ─────────────────────────────────────────────────────────────
+
+  ci-gate:
+    name: CI Gate
+    runs-on: ubuntu-latest
+    needs:
+      - backend-lint
+      - backend-tests
+      - frontend-build
+      - docker-build
+    steps:
+      - name: All required checks passed
+        run: echo "CI gate passed ✓"

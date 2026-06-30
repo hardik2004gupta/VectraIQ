@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: vectraiq
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  qdrant:
+    image: qdrant/qdrant:v1.17.0
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    working_dir: /app
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/vectraiq
+      - QDRANT_URL=http://qdrant:6333
+      - UPSTASH_REDIS_URL=${UPSTASH_REDIS_URL:-}
+      - UPSTASH_REDIS_TOKEN=${UPSTASH_REDIS_TOKEN:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - TAVILY_API_KEY=${TAVILY_API_KEY:-}
+      - JWT_SECRET=${JWT_SECRET}
+      - LOG_JSON=${LOG_JSON:-false}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - FRONTEND_ORIGINS=${FRONTEND_ORIGINS:-http://localhost:3000}
+      - REFLECTION_MIN_SCORE=${REFLECTION_MIN_SCORE:-0.85}
+      - MAX_REFLECTION_RETRIES=${MAX_REFLECTION_RETRIES:-2}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+    volumes:
+      - ./vectraiq:/app/vectraiq
+      - ./scripts:/app/scripts
+      - ./seed:/app/seed
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/admin/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    command: ["python", "scripts/serve.py"]
+
+
+volumes:
+  postgres_data:
+  qdrant_data:
