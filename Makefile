@@ -2,14 +2,14 @@
 
 
 help:
-	@echo "ADV RAG — Available commands"
+	@echo "VectraIQ — Available commands"
 	@echo ""
 	@echo "  make install       — create venv & install all deps (one-time)"
 	@echo "  make sync          — sync deps with pyproject.toml"
 	@echo "  make seed          — seed DB + ingest docs into Qdrant"
 	@echo "  make seed-data     — download + generate the 95/5 noise corpus (~130-200 MB)"
 	@echo "  make api           — start FastAPI backend (:8000)"
-	@echo "  make streamlit     — start Streamlit UI (:8501)"
+	@echo "  make streamlit     — start legacy Streamlit UI (:8501) [archived]"
 	@echo "  make eval          — run baseline + all + diff"
 	@echo "  make test          — run pytest"
 	@echo "  make lint          — run ruff check"
@@ -37,7 +37,7 @@ api:
 	uv run uvicorn vectraiq.main:app --host 0.0.0.0 --port 8000 --reload
 
 streamlit:
-	uv run streamlit run scripts/streamlit_app.py
+	uv run streamlit run archive/scripts/streamlit_app.py
 
 
 eval-baseline:
